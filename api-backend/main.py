@@ -1,5 +1,4 @@
 from math import radians, sin, cos, sqrt, atan2, pi
-import passiogo
 from flask import Flask, jsonify
 import passiogo
 
@@ -54,6 +53,7 @@ def get_live_vehicle_data():
                 "route_id": vehicle.routeId,
                 "route_name": vehicle.routeName,
                 "longitude": vehicle.longitude,
+                "latitude": vehicle.latitude,
                 "speed": vehicle.speed,
                 "pax_load": vehicle.paxLoad,
                 "in_service": not vehicle.outOfService,
@@ -117,7 +117,7 @@ def get_next_stop(vehicle_id):
         if vehicle_lon > 180 or vehicle_lon < -180:
             raise ValueError(f"Invalid longitude detected: {vehicle_lon}")
         
-        vehicle_lat = float(vehicle.latitude)
+        vehicle_lat = float(current_stop.latitude)
 
         # Debugging print to verify the coordinates
         print(f"Vehicle Longitude: {vehicle_lon}, Current Stop Latitude: {vehicle_lat}")
