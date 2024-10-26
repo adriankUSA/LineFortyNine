@@ -1,13 +1,13 @@
 from math import radians, sin, cos, sqrt, atan2, pi
 import passiogo
 from flask import Flask, jsonify
-
+import test
 
 app = Flask(__name__)
 
 # Step 1: Identify the transportation system ID for UNC Charlotte
 system_id = 1053
-system = passiogo.getSystemFromID(system_id)
+system = test.getSystemFromID(system_id)
 
 @app.route('/', methods=['GET'])
 def home():
