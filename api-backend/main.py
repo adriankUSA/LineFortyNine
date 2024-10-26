@@ -1,13 +1,13 @@
 from math import radians, sin, cos, sqrt, atan2, pi
 import passiogo
 from flask import Flask, jsonify
-import test
+import passiogo
 
 app = Flask(__name__)
 
 # Step 1: Identify the transportation system ID for UNC Charlotte
 system_id = 1053
-system = test.getSystemFromID(system_id)
+system = passiogo.getSystemFromID(system_id)
 
 @app.route('/', methods=['GET'])
 def home():
@@ -117,7 +117,7 @@ def get_next_stop(vehicle_id):
         if vehicle_lon > 180 or vehicle_lon < -180:
             raise ValueError(f"Invalid longitude detected: {vehicle_lon}")
         
-        vehicle_lat = float(current_stop.latitude)
+        vehicle_lat = float(vehicle.latitude)
 
         # Debugging print to verify the coordinates
         print(f"Vehicle Longitude: {vehicle_lon}, Current Stop Latitude: {vehicle_lat}")
