@@ -9,6 +9,7 @@
     /* Ensures the popup content stays within boundaries */
     .container {
       max-width: 100%; /* Keeps container within viewport width */
+      padding-right: 25px ;
     }
 
     .field .input, .field .select select {
@@ -18,41 +19,50 @@
 </head>
 <body>
 
-<div class="container m-3">
-  <h1 class="title">Bus Arrival Times</h1>
+  <div class="container m-3">
+    <h1 class="title">Bus Arrival Times</h1>
 
-  <div class="field">
-    <label class="label">Status</label>
-    <span class="tag is-success">Running</span>
-    <span class="tag is-danger">Stopping</span>
-  </div>
-</div>
-
-<div class="container m-3">
-  <div class="field">
-    <label class="label">Bus Stop Name</label>
-    <div class="select is-fullwidth">
-      <select>
-        <option>Select Bus Stop</option>
-        <!-- Add more bus stop options here -->
-      </select>
+    <div class="field">
+      <label class="label">Status</label>
+      <span class="tag is-success">Running</span>
+      <span class="tag is-danger">Stopping</span>
     </div>
   </div>
 
-  <div class="field">
-    <label class="label">Start date</label>
-    <div class="control">
-      <input type="date" class="input">
+  <div class="container m-3">
+    <div class="field">
+      <label class="label">Bus Stop Name</label>
+      <div class="select is-fullwidth">
+        <select>
+          <option>Select Bus Stop</option>
+          <!-- Add more bus stop options here -->
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label">Start date</label>
+      <div class="control">
+        <input type="date" class="input">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label">End date</label>
+      <div class="control">
+        <input type="date" class="input">
+      </div>
     </div>
   </div>
 
-  <div class="field">
-    <label class="label">End date</label>
-    <div class="control">
-      <input type="date" class="input">
-    </div>
+  <div class="container m-3">
+    <button class="button is-success is-fullwidth" id="startButton">Save & Start</button>
   </div>
-</div>
+
+  <div class="container m-3">
+    <button class="button is-danger is-fullwidth" id="stopButton">Stop</button>
+  </div>
+
 
 </body>
 </html>
