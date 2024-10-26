@@ -2,6 +2,8 @@ from math import radians, sin, cos, sqrt, atan2, pi
 import passiogo
 from flask import Flask, jsonify
 import passiogo
+from datetime import datetime
+import time
 
 app = Flask(__name__)
 
@@ -87,6 +89,7 @@ def haversine(lat1, lon1, lat2, lon2):
     return r * c  # Distance in meters
 
 
+previous_vehicle_state = {}
 @app.route('/api/next-stop/<vehicle_id>', methods=['GET'])
 def get_next_stop(vehicle_id):
     try:
@@ -95,6 +98,33 @@ def get_next_stop(vehicle_id):
 
         if not vehicle:
             return jsonify({"error": "Vehicle not found"}), 404
+
+        vehicle_lat = float(vehicle.latitude)
+        vehicle_lon = float(vehicle.longitude)
+        current_time = datetime.now()  # Current timestamp
+
+        # Check if we have previous state for this vehicle
+        if vehicle_id in previous_vehicle_state:
+            previous_lat, previous_lon, previous_time = previous_vehicle_state[vehicle_id]
+
+            # Calculate distance using Haversine formula
+            distance_to_stop = haversine(vehicle_lat, vehicle_lon, previous_lat, previous_lon)
+
+            # Calculate time difference in seconds
+            time_difference_seconds = (current_time - previous_time).total_seconds()
+
+            # Calculate speed (m/s)
+            if time_difference_seconds > 0:  # Avoid division by zero
+                speed_mps = distance_to_stop / time_difference_seconds
+            else:
+                speed_mps = 0  # Speed is zero if time difference is zero
+
+        else:
+            # If no previous state, set speed to zero
+            speed_mps = 0
+
+        # Update previous state
+        previous_vehicle_state[vehicle_id] = (vehicle_lat, vehicle_lon, current_time)
 
         routes = system.getRoutes()
         route = next((r for r in routes if str(r.myid) == str(vehicle.routeId)), None)
@@ -106,44 +136,37 @@ def get_next_stop(vehicle_id):
         if not stops or len(stops) < 2:
             return jsonify({"error": "Not enough stops on the route"}), 404
 
-        # Assume the first stop is the current stop
         current_stop = stops[0]
         next_stop = stops[1]
 
-        # Validate and swap lat/lon if necessary
-        vehicle_lon = float(vehicle.longitude)
+        distance_to_next_stop = haversine(vehicle_lat, vehicle_lon, float(next_stop.latitude), float(next_stop.longitude))
 
-        # If the longitude looks like a latitude, swap it
-        if vehicle_lon > 180 or vehicle_lon < -180:
-            raise ValueError(f"Invalid longitude detected: {vehicle_lon}")
-        
-        vehicle_lat = float(vehicle.latitude)
+        # Calculate time to next stop in seconds using the current speed
+        if speed_mps > 0:  # Avoid division by zero
+            time_to_next_stop_seconds = distance_to_next_stop / speed_mps
+        else:
+            time_to_next_stop_seconds = float('inf')  # If speed is zero, set time to infinity
 
-        # Debugging print to verify the coordinates
-        print(f"Vehicle Longitude: {vehicle_lon}, Current Stop Latitude: {vehicle_lat}")
-        print(f"Next Stop Coordinates: {next_stop.latitude}, {next_stop.longitude}")
-
-        # Calculate the distance to the next stop
-        distance_to_stop = haversine(
-            vehicle_lat, vehicle_lon,
-            float(next_stop.latitude), float(next_stop.longitude)
-        )
-
+        # Convert time to minutes
+        time_to_next_stop_minutes = time_to_next_stop_seconds / 60
+        time.sleep(5)
         return jsonify({
             "vehicle_id": vehicle.id,
             "route_name": route.name,
             "next_stop": next_stop.name,
             "next_stop_latitude": next_stop.latitude,
             "next_stop_longitude": next_stop.longitude,
-            "vehicle_longitude": vehicle.longitude,
-            "approx_distance_to_next_stop_meters": distance_to_stop
+            "vehicle_latitude": vehicle_lat,
+            "vehicle_longitude": vehicle_lon,
+            "approx_distance_to_next_stop_meters": distance_to_next_stop,
+            "estimated_time_to_next_stop_minutes": time_to_next_stop_minutes,
+            "current_speed_mps": speed_mps
         }), 200
 
     except ValueError as ve:
         return jsonify({"error": str(ve)}), 400
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    
 
 
 if __name__ == '__main__':
