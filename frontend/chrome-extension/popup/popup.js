@@ -1,10 +1,21 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const sideTab = document.getElementById('side-tab');
-    const tabToggle = document.getElementById('tab-toggle');
-  
-    // Toggle the expanded state on button click
-    tabToggle.addEventListener('click', () => {
-      sideTab.classList.toggle('expanded');
-    });
-  });
-  
+//elements
+const busStopNameElement = document.getElementById("busStopName")
+const busNameElement = document.getElementById("busName")
+
+//Button elements
+const startButton = document.getElementById("startButton")
+const stopButton= document.getElementById("endButton")
+
+startButton.onclick = function() {
+  console.log("Clicked start");
+}
+
+busStopNameElement.onchange = function() {
+  const selectedValue = busStopNameElement.value;
+  console.log("Dropdown changed to:", selectedValue);
+};
+
+busNameElement.onchange = function() {
+  const selectedValue = busNameElement.value;
+  console.log("Dropdown changed to:", selectedValue);
+};
