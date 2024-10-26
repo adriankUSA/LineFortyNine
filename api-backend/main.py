@@ -4,9 +4,10 @@ from flask import Flask, jsonify
 import passiogo
 from datetime import datetime
 import time
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app)
 # Step 1: Identify the transportation system ID for UNC Charlotte
 system_id = 1053
 system = passiogo.getSystemFromID(system_id)
