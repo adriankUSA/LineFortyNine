@@ -4,20 +4,59 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Line Forty Nine Popup</title>
-  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="bulma.min.css">
+  <style>
+    /* Ensures the popup content stays within boundaries */
+    .container {
+      max-width: 100%; /* Keeps container within viewport width */
+      padding-right: 25px ;
+    }
+
+    .field .input, .field .select select {
+      width: 100%; /* Full width for inputs and selects */
+    }
+  </style>
 </head>
 <body>
 
-<div id="side-tab">
-  <button id="tab-toggle">☰</button>
-  <div id="tab-content">
-    <h2>Bus Arrival Times</h2>
-    <p>Check the arrival times for nearby buses.</p>
-    <!-- Add more content as needed -->
-  </div>
-</div>
+  <div class="container m-3">
+    <h1 class="title">Bus Arrival Times</h1>
 
-<script src="popup.js"></script>
+    <div class="field">
+      <label class="label">Status</label>
+      <span class="tag is-success">Running</span>
+      <span class="tag is-danger">Stopping</span>
+    </div>
+  </div>
+
+  <div class="container m-3">
+    <div class="field">
+      <label class="label">Bus Stop Name</label>
+      <div class="select is-fullwidth">
+        <select id="busStopName">
+          <option>Stop 1</option>
+          <option>Stop 2</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="label">Bus Name</label>
+      <div class="select is-fullwidth">
+        <select id="busName">
+          <option>Gold Bus</option>
+          <option>Silver Bus</option>
+        </select>
+      </div>
+    </div>
+
+  <div class="container m-3">
+    <button class="button is-success is-fullwidth" id="startButton">Save & Start</button>
+  </div>
 </body>
+<script src="popup.js"></script>
+
 </html>
+
+
 
