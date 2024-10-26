@@ -1,0 +1,9 @@
+{
+    "name": "Line Forty Nine",
+    "description": "Extension to show bus arrival time and map",
+    "version": "1.0",
+    "manifest_version": 3,
+    "action": {
+      "default_popup": "/popup/popup.html"
+    }
+  }
