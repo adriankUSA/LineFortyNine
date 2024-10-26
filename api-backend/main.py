@@ -1,4 +1,5 @@
 from math import radians, sin, cos, sqrt, atan2, pi
+import passiogo
 from flask import Flask, jsonify
 import passiogo
 from datetime import datetime
@@ -55,7 +56,6 @@ def get_live_vehicle_data():
                 "route_id": vehicle.routeId,
                 "route_name": vehicle.routeName,
                 "longitude": vehicle.longitude,
-                "latitude": vehicle.latitude,
                 "speed": vehicle.speed,
                 "pax_load": vehicle.paxLoad,
                 "in_service": not vehicle.outOfService,
@@ -139,25 +139,17 @@ def get_next_stop(vehicle_id):
         current_stop = stops[0]
         next_stop = stops[1]
 
-        # Validate and swap lat/lon if necessary
-        vehicle_lon = float(vehicle.longitude)
+        distance_to_next_stop = haversine(vehicle_lat, vehicle_lon, float(next_stop.latitude), float(next_stop.longitude))
 
-        # If the longitude looks like a latitude, swap it
-        if vehicle_lon > 180 or vehicle_lon < -180:
-            raise ValueError(f"Invalid longitude detected: {vehicle_lon}")
-        
-        vehicle_lat = float(vehicle.latitude)
+        # Calculate time to next stop in seconds using the current speed
+        if speed_mps > 0:  # Avoid division by zero
+            time_to_next_stop_seconds = distance_to_next_stop / speed_mps
+        else:
+            time_to_next_stop_seconds = float('inf')  # If speed is zero, set time to infinity
 
-        # Debugging print to verify the coordinates
-        print(f"Vehicle Longitude: {vehicle_lon}, Current Stop Latitude: {vehicle_lat}")
-        print(f"Next Stop Coordinates: {next_stop.latitude}, {next_stop.longitude}")
-
-        # Calculate the distance to the next stop
-        distance_to_stop = haversine(
-            vehicle_lat, vehicle_lon,
-            float(next_stop.latitude), float(next_stop.longitude)
-        )
-
+        # Convert time to minutes
+        time_to_next_stop_minutes = time_to_next_stop_seconds / 60
+        time.sleep(2)
         return jsonify({
             "vehicle_id": vehicle.id,
             "route_name": route.name,
