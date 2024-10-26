@@ -90,9 +90,11 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 previous_vehicle_state = {}
+
 @app.route('/api/next-stop/<vehicle_id>', methods=['GET'])
 def get_next_stop(vehicle_id):
     try:
+        # Retrieve all vehicles and find the matching one
         vehicles = system.getVehicles()
         vehicle = next((v for v in vehicles if str(v.id).strip() == str(vehicle_id).strip()), None)
 
@@ -101,58 +103,62 @@ def get_next_stop(vehicle_id):
 
         vehicle_lat = float(vehicle.latitude)
         vehicle_lon = float(vehicle.longitude)
-        current_time = datetime.now()  # Current timestamp
+        current_time = datetime.now()
 
         # Check if we have previous state for this vehicle
         if vehicle_id in previous_vehicle_state:
-            previous_lat, previous_lon, previous_time = previous_vehicle_state[vehicle_id]
-
-            # Calculate distance using Haversine formula
-            distance_to_stop = haversine(vehicle_lat, vehicle_lon, previous_lat, previous_lon)
-
-            # Calculate time difference in seconds
-            time_difference_seconds = (current_time - previous_time).total_seconds()
-
-            # Calculate speed (m/s)
-            if time_difference_seconds > 0:  # Avoid division by zero
-                speed_mps = distance_to_stop / time_difference_seconds
-            else:
-                speed_mps = 0  # Speed is zero if time difference is zero
-
+            prev_lat, prev_lon, prev_time = previous_vehicle_state[vehicle_id]
+            # Calculate distance and time difference
+            distance_traveled = haversine(vehicle_lat, vehicle_lon, prev_lat, prev_lon)
+            time_diff = (current_time - prev_time).total_seconds()
+            # Avoid division by zero
+            speed_mps = distance_traveled / time_diff if time_diff > 0 else 0
         else:
-            # If no previous state, set speed to zero
+            # Default speed if no previous data
             speed_mps = 0
 
-        # Update previous state
+        # Store the new state
         previous_vehicle_state[vehicle_id] = (vehicle_lat, vehicle_lon, current_time)
 
+        # Find the matching route
         routes = system.getRoutes()
         route = next((r for r in routes if str(r.myid) == str(vehicle.routeId)), None)
 
         if not route:
             return jsonify({"error": f"Route with ID '{vehicle.routeId}' not found for vehicle"}), 404
 
+        # Get all stops for the route
         stops = route.getStops()
         if not stops or len(stops) < 2:
             return jsonify({"error": "Not enough stops on the route"}), 404
 
-        current_stop = stops[0]
-        next_stop = stops[1]
+        # Find the closest stop and the next stop
+        closest_stop = min(stops, key=lambda stop: haversine(vehicle_lat, vehicle_lon, stop.latitude, stop.longitude))
+        closest_index = stops.index(closest_stop)
+        next_stop = stops[closest_index + 1] if closest_index + 1 < len(stops) else None
 
-        distance_to_next_stop = haversine(vehicle_lat, vehicle_lon, float(next_stop.latitude), float(next_stop.longitude))
+        if not next_stop:
+            return jsonify({"error": "No more stops on the route"}), 404
 
-        # Calculate time to next stop in seconds using the current speed
-        if speed_mps > 0:  # Avoid division by zero
+        # Calculate the distance to the next stop
+        distance_to_next_stop = haversine(
+            vehicle_lat, vehicle_lon, next_stop.latitude, next_stop.longitude
+        )
+
+        # Calculate estimated time to the next stop
+        if speed_mps > 0:
             time_to_next_stop_seconds = distance_to_next_stop / speed_mps
         else:
-            time_to_next_stop_seconds = float('inf')  # If speed is zero, set time to infinity
+            time_to_next_stop_seconds = float('inf')  # Infinite time if bus is stationary
 
-        # Convert time to minutes
+        # Convert time to minutes for better readability
         time_to_next_stop_minutes = time_to_next_stop_seconds / 60
-        time.sleep(2)
+
+        # Return the data as a JSON response
         return jsonify({
             "vehicle_id": vehicle.id,
             "route_name": route.name,
+            "closest_stop": closest_stop.name,
             "next_stop": next_stop.name,
             "next_stop_latitude": next_stop.latitude,
             "next_stop_longitude": next_stop.longitude,
