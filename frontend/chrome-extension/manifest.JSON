@@ -9,7 +9,7 @@
     },
       
     "background":{
-      "service_worder": "background.js",
+      "service_worker": "background.js",
       "type": "module"
     },
     "permissions":[
