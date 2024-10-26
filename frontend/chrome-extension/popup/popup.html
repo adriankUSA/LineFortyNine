@@ -4,20 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Line Forty Nine Popup</title>
-  <link rel="stylesheet" href="popup.css">
+  <link rel="stylesheet" href="bulma.min.css">
+  <style>
+    /* Ensures the popup content stays within boundaries */
+    .container {
+      max-width: 100%; /* Keeps container within viewport width */
+    }
+
+    .field .input, .field .select select {
+      width: 100%; /* Full width for inputs and selects */
+    }
+  </style>
 </head>
 <body>
 
-<div id="side-tab">
-  <button id="tab-toggle">☰</button>
-  <div id="tab-content">
-    <h2>Bus Arrival Times</h2>
-    <p>Check the arrival times for nearby buses.</p>
-    <!-- Add more content as needed -->
+<div class="container m-3">
+  <h1 class="title">Bus Arrival Times</h1>
+
+  <div class="field">
+    <label class="label">Status</label>
+    <span class="tag is-success">Running</span>
+    <span class="tag is-danger">Stopping</span>
   </div>
 </div>
 
-<script src="popup.js"></script>
+<div class="container m-3">
+  <div class="field">
+    <label class="label">Bus Stop Name</label>
+    <div class="select is-fullwidth">
+      <select>
+        <option>Select Bus Stop</option>
+        <!-- Add more bus stop options here -->
+      </select>
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">Start date</label>
+    <div class="control">
+      <input type="date" class="input">
+    </div>
+  </div>
+
+  <div class="field">
+    <label class="label">End date</label>
+    <div class="control">
+      <input type="date" class="input">
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
+
+
 
