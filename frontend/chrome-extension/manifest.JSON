@@ -14,6 +14,8 @@
       "type": "module"
     },
     "permissions":[
-      "storage"
+      "storage",
+      "alarms",
+      "notifications"
     ]
   }
