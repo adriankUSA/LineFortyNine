@@ -16,6 +16,9 @@
     "permissions":[
       "storage",
       "alarms",
-      "notifications"
-    ]
+      "notifications" 
+    ],
+    "icons": {
+    "128": "/images/line49Logo.png"
+    }
   }
