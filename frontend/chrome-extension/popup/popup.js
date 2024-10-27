@@ -1,119 +1,85 @@
-//elements
-const busStopNameElement = document.getElementById("busStopName")
-const busNameElement = document.getElementById("busName")
+// DOM elements
+const busStopSelect = document.getElementById("busStopName");
+const busNameSelect = document.getElementById("busName");
+const startButton = document.getElementById("startButton");
 
-//Button elements
-const startButton = document.getElementById("startButton")
-const stopButton= document.getElementById("endButton")
+// Object to store bus data
+const busData = {}; // { route_name: [stop_name1, stop_name2, ...] }
 
-startButton.onclick = function() {
-  console.log("Clicked start");
-}
-
-busStopNameElement.onchange = function() {
-  const selectedValue = busStopNameElement.value;
-  console.log("Dropdown changed to:", selectedValue);
-};
-
-busNameElement.onchange = function() {
-  const selectedValue = busNameElement.value;
-  console.log("Dropdown changed to:", selectedValue);
-};
-
-async function fetchBusRoutes() {
-  try {
-    const response = await fetch('http://127.0.0.1:5000/api/vehicles');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const vehicles = await response.json();
-    console.log('Fetched vehicles:', vehicles); // Log the fetched data
-    vehicles.forEach(vehicle => {
-      busData[vehicle.route_name] = []; // Initialize an empty array for each route
-    });
-    populateBusStops();
-  } catch (error) {
-    console.error('Error fetching bus routes:', error);
-  }
-}
-
+// Fetch all bus stops and populate the stops dropdown
 async function fetchBusStops() {
-  try {
-    const response = await fetch('http://127.0.0.1:5000/api/stops');
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/stops');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch stops: ${response.status}`);
+        }
+        const stops = await response.json();
+
+        // Populate stops based on fetched data
+        stops.forEach(stop => {
+            const option = document.createElement("option");
+            option.value = stop.name;
+            option.textContent = stop.name;
+            busStopSelect.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error fetching stops:', error);
     }
-    const stops = await response.json();
-    console.log('Fetched stops:', stops); // Log the fetched data
-    stops.forEach(stop => {
-      // Assume each stop has a 'name' and 'route_name' property
-      if (busData[stop.route_name]) {
-        busData[stop.route_name].push(stop.name);
-      }
-    });
-  } catch (error) {
-    console.error('Error fetching bus stops:', error);
-  }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  const busStopSelect = document.getElementById("busStopName");
-  const busNameSelect = document.getElementById("busName");
+// Fetch all bus routes and store them in busData
+async function fetchBusRoutes() {
+    try {
+        const response = await fetch('http://127.0.0.1:5000/api/vehicles');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch vehicles: ${response.status}`);
+        }
+        const vehicles = await response.json();
 
-  // Object to hold bus data
-  const busData = {};
+        // Store route and bus data
+        vehicles.forEach(vehicle => {
+            if (!busData[vehicle.route_name]) {
+                busData[vehicle.route_name] = [];
+            }
+            busData[vehicle.route_name].push(vehicle.name);
+        });
 
-  // Fetch bus stops from the API and populate the dropdown
-  async function fetchBusStops() {
-      try {
-          const response = await fetch('http://127.0.0.1:5000/api/stops');
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          const stops = await response.json();
-          stops.forEach(stop => {
-              const option = document.createElement("option");
-              option.value = stop.name;
-              option.textContent = stop.name;
-              busStopSelect.appendChild(option);
-          });
-      } catch (error) {
-          console.error('Error fetching bus stops:', error);
-      }
-  }
+        // Populate routes dropdown
+        populateRoutes();
+    } catch (error) {
+        console.error('Error fetching vehicles:', error);
+    }
+}
 
-  // Fetch vehicle routes from the API
-  async function fetchBusRoutes() {
-      try {
-          const response = await fetch('http://127.0.0.1:5000/api/vehicles');
-          if (!response.ok) {
-              throw new Error('Network response was not ok');
-          }
-          const vehicles = await response.json();
-          vehicles.forEach(vehicle => {
-              busData[vehicle.route_name] = vehicle.name;
-          });
-          populateRoutes();
-      } catch (error) {
-          console.error('Error fetching bus routes:', error);
-      }
-  }
+// Populate routes dropdown based on fetched bus data
+function populateRoutes() {
+    Object.keys(busData).forEach(route => {
+        const option = document.createElement("option");
+        option.value = route;
+        option.textContent = route;
+        busNameSelect.appendChild(option);
+    });
+}
 
-  // Populate the routes dropdown based on the fetched data
-  function populateRoutes() {
-      Object.keys(busData).forEach(route => {
-          const option = document.createElement("option");
-          option.value = route;
-          option.textContent = route;
-          busNameSelect.appendChild(option);
-      });
-  }
+// Event listener to update the stop names when the route changes
+busNameSelect.addEventListener("change", () => {
+    const selectedRoute = busNameSelect.value;
+    const stops = busData[selectedRoute] || [];
 
-  // Initialize data fetching on page load
-  async function initialize() {
-      await fetchBusStops();
-      await fetchBusRoutes();
-  }
+    // Clear existing stop options
+    busStopSelect.innerHTML = "";
 
-  initialize();
+    // Populate new stop options based on selected route
+    stops.forEach(stop => {
+        const option = document.createElement("option");
+        option.value = stop;
+        option.textContent = stop;
+        busStopSelect.appendChild(option);
+    });
+});
+
+// Initialize the extension
+document.addEventListener("DOMContentLoaded", async () => {
+    await fetchBusStops();
+    await fetchBusRoutes();
 });
