@@ -90,7 +90,9 @@ def haversine(lat1, lon1, lat2, lon2):
     return r * c  # Distance in meters
 
 
-previous_vehicle_state = {}
+# Track the previous state and a history of speeds for smoother estimates
+previous_vehicle_state = {}  # {vehicle_id: (lat, lon, timestamp, speed_history)}
+
 @app.route('/api/next-stop/<vehicle_id>', methods=['GET'])
 def get_next_stop(vehicle_id):
     try:
@@ -102,31 +104,39 @@ def get_next_stop(vehicle_id):
 
         vehicle_lat = float(vehicle.latitude)
         vehicle_lon = float(vehicle.longitude)
-        current_time = datetime.now()  # Current timestamp
+        current_time = datetime.now()
 
-        # Check if we have previous state for this vehicle
+        # Retrieve previous state if available
         if vehicle_id in previous_vehicle_state:
-            previous_lat, previous_lon, previous_time = previous_vehicle_state[vehicle_id]
+            prev_lat, prev_lon, prev_time, speed_history = previous_vehicle_state[vehicle_id]
 
-            # Calculate distance using Haversine formula
-            distance_to_stop = haversine(vehicle_lat, vehicle_lon, previous_lat, previous_lon)
+            # Calculate distance traveled and time elapsed
+            distance_traveled = haversine(vehicle_lat, vehicle_lon, prev_lat, prev_lon)
+            time_diff = (current_time - prev_time).total_seconds()
 
-            # Calculate time difference in seconds
-            time_difference_seconds = (current_time - previous_time).total_seconds()
-
-            # Calculate speed (m/s)
-            if time_difference_seconds > 0:  # Avoid division by zero
-                speed_mps = distance_to_stop / time_difference_seconds
+            # Avoid division by zero; calculate instantaneous speed
+            if time_diff > 0:
+                current_speed = distance_traveled / time_diff  # Speed in m/s
             else:
-                speed_mps = 0  # Speed is zero if time difference is zero
+                current_speed = 0
+
+            # Add current speed to the speed history (cap history size to last 5 speeds)
+            speed_history.append(current_speed)
+            if len(speed_history) > 5:
+                speed_history.pop(0)
+
+            # Calculate the average speed from the history for smoother estimates
+            avg_speed = sum(speed_history) / len(speed_history)
 
         else:
-            # If no previous state, set speed to zero
-            speed_mps = 0
+            # No previous state; assume starting speed is 0
+            avg_speed = 0
+            speed_history = []
 
-        # Update previous state
-        previous_vehicle_state[vehicle_id] = (vehicle_lat, vehicle_lon, current_time)
+        # Update the vehicle's state in the tracking dictionary
+        previous_vehicle_state[vehicle_id] = (vehicle_lat, vehicle_lon, current_time, speed_history)
 
+        # Get the route and stops
         routes = system.getRoutes()
         route = next((r for r in routes if str(r.myid) == str(vehicle.routeId)), None)
 
@@ -137,23 +147,33 @@ def get_next_stop(vehicle_id):
         if not stops or len(stops) < 2:
             return jsonify({"error": "Not enough stops on the route"}), 404
 
-        current_stop = stops[0]
-        next_stop = stops[1]
+        # Find the closest stop and the next stop
+        closest_stop = min(stops, key=lambda stop: haversine(vehicle_lat, vehicle_lon, stop.latitude, stop.longitude))
+        closest_index = stops.index(closest_stop)
+        next_stop = stops[closest_index + 1] if closest_index + 1 < len(stops) else None
 
-        distance_to_next_stop = haversine(vehicle_lat, vehicle_lon, float(next_stop.latitude), float(next_stop.longitude))
+        if not next_stop:
+            return jsonify({"error": "No more stops on the route"}), 404
 
-        # Calculate time to next stop in seconds using the current speed
-        if speed_mps > 0:  # Avoid division by zero
-            time_to_next_stop_seconds = distance_to_next_stop / speed_mps
-        else:
-            time_to_next_stop_seconds = float('inf')  # If speed is zero, set time to infinity
+        # Calculate the distance to the next stop
+        distance_to_next_stop = haversine(
+            vehicle_lat, vehicle_lon, next_stop.latitude, next_stop.longitude
+        )
 
-        # Convert time to minutes
-        time_to_next_stop_minutes = time_to_next_stop_seconds / 60
-        time.sleep(2)
+        # If the bus is stopped, use a reasonable speed floor (5.56 m/s ~ 20 km/h)
+        if avg_speed <= 0.1:
+            avg_speed = 5.56  # Set a reasonable default speed
+
+        # Calculate estimated time to the next stop in seconds
+        time_to_next_stop_seconds = distance_to_next_stop / avg_speed
+
+        # Convert time to minutes for better readability
+        time_to_next_stop_minutes = round(time_to_next_stop_seconds / 60, 2)
+
         return jsonify({
             "vehicle_id": vehicle.id,
             "route_name": route.name,
+            "closest_stop": closest_stop.name,
             "next_stop": next_stop.name,
             "next_stop_latitude": next_stop.latitude,
             "next_stop_longitude": next_stop.longitude,
@@ -161,7 +181,7 @@ def get_next_stop(vehicle_id):
             "vehicle_longitude": vehicle_lon,
             "approx_distance_to_next_stop_meters": distance_to_next_stop,
             "estimated_time_to_next_stop_minutes": time_to_next_stop_minutes,
-            "current_speed_mps": speed_mps
+            "average_speed_mps": avg_speed
         }), 200
 
     except ValueError as ve:
