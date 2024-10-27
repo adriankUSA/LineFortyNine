@@ -1,0 +1,87 @@
+/* General reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #e6f5f1; /* Light green background */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+    color: #333;
+    text-align: center;
+}
+
+/* Header styling */
+header {
+    margin-bottom: 30px;
+}
+
+h1 {
+    color: #007f5f; /* Darker green */
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+/* Centering and styling the grid */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 800px;
+    justify-items: center;
+}
+
+/* Card styling */
+.card {
+    background-color: white;
+    padding: 30px 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s, box-shadow 0.3s;
+    border-top: 4px solid #28a745; /* Green top border */
+    width: 100%;
+    max-width: 300px;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.icon {
+    font-size: 2.5em;
+    margin-bottom: 15px;
+    color: #28a745; /* Green for icons */
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 1.2em;
+}
+
+p {
+    color: #666;
+    font-size: 1em;
+}
+
+/* Body and text color adjustments */
+body {
+    background-color: #e6f5f1; /* Light green background */
+}
+
+h1 {
+    color: #007f5f; /* Dark green for header text */
+}
+
+.icon {
+    color: #28a745; /* Primary green for icons */
+}
