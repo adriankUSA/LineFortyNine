@@ -85,3 +85,27 @@ h1 {
 .icon {
     color: #28a745; /* Primary green for icons */
 }
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #f8f8f8; /* Change as needed */
+    text-align: center;
+    padding: 10px 0;
+}
+
+footer p {
+    margin: 0;
+}
+
+footer a {
+    color: #007BFF; /* Change as needed */
+    text-decoration: none;
+}
+
+footer a:hover {
+    text-decoration: underline;
+}
+
