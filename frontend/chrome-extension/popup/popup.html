@@ -15,6 +15,10 @@
     .field .input, .field .select select {
       width: 100%; /* Full width for inputs and selects */
     }
+    
+    .bus-info {
+      margin-top: 20px; /* Adds space above bus info display */
+    }
   </style>
 </head>
 <body>
@@ -24,115 +28,27 @@
   </div>
 
   <div class="container m-3">
-
     <div class="field">
       <label class="label">Bus Name</label>
       <div class="select is-fullwidth">
         <select id="busName">
-          <!-- Options will be populated dynamically based on the selected bus stop -->
+          <!-- Options will be populated dynamically based on the fetched bus routes -->
         </select>
       </div>
     </div>
-
-    <div class="field">
-      <label class="label">Bus Stop Name</label>
-      <div class="select is-fullwidth">
-        <select id="busStopName">
-          <!-- Options will be populated dynamically -->
-        </select>
-      </div>
-    </div>
-    
   </div>
 
   <div class="container m-3">
-    <button class="button is-success is-fullwidth" id="startButton">Save & Start</button>
+    <div class="field">
+      <label class="label">Bus Info</label>
+      <div class="select is-fullwidth">
+        <select id="busInfo">
+          <!-- Bus information will be displayed here -->
+        </select>
+      </div>
+    </div>
   </div>
 
   <script src="popup.js"></script>
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const busStopSelect = document.getElementById("busStopName");
-        const busNameSelect = document.getElementById("busName");
-
-        // Object to hold bus data
-        const busData = {};
-
-        // Fetch bus routes (names) from the API
-        async function fetchBusRoutes() {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/api/vehicles');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const vehicles = await response.json();
-                vehicles.forEach(vehicle => {
-                    busData[vehicle.routeName] = []; // Initialize an empty array for each route
-                });
-                populateBusStops();
-            } catch (error) {
-                console.error('Error fetching bus routes:', error);
-            }
-        }
-
-        // Fetch bus stops from the API
-        async function fetchBusStops() {
-            try {
-                const response = await fetch('http://127.0.0.1:5000/api/stops');
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const stops = await response.json();
-                stops.forEach(stop => {
-                    // Assume each stop has a 'name' and 'route_name' property
-                    if (busData[stop.route_name]) {
-                        busData[stop.route_name].push(stop.name); // Use stop.name for the stop name
-                    }
-                });
-            } catch (error) {
-                console.error('Error fetching bus stops:', error);
-            }
-        }
-
-        // Populate bus stop options
-        function populateBusStops() {
-            Object.keys(busData).forEach(route => {
-                const option = document.createElement("option");
-                option.value = route;
-                option.textContent = route;
-                busStopSelect.appendChild(option);
-            });
-        }
-
-        // Update bus names based on selected bus stop
-        function updateBusNames() {
-            const selectedRoute = busStopSelect.value;
-            const stops = busData[selectedRoute] || [];
-
-            // Clear current bus name options
-            busNameSelect.innerHTML = "";
-
-            // Populate bus names based on selected route
-            stops.forEach(bus => {
-                const option = document.createElement("option");
-                option.value = bus; // Use stop name as the value
-                option.textContent = bus; // Use stop name as the display text
-                busNameSelect.appendChild(option);
-            });
-        }
-
-        // Event listener for bus stop selection
-        busStopSelect.addEventListener("change", updateBusNames);
-        
-        // Initialize the app
-        async function initialize() {
-            await fetchBusRoutes();
-            await fetchBusStops();
-            updateBusNames(); // Update bus names for the default selection
-        }
-
-        initialize();
-    });
-</script>
 </body>
 </html>
