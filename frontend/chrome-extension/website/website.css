@@ -65,12 +65,12 @@ h1 {
 h2 {
     color: #333;
     margin-bottom: 10px;
-    font-size: 1.2em;
+    font-size: 1.7em;
 }
 
 p {
     color: #666;
-    font-size: 1em;
+    font-size: 1.3em;
 }
 
 /* Body and text color adjustments */
@@ -103,6 +103,7 @@ footer p {
 footer a {
     color: #007BFF; /* Change as needed */
     text-decoration: none;
+    font-size: 24px;
 }
 
 footer a:hover {
