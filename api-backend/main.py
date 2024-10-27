@@ -89,12 +89,12 @@ def haversine(lat1, lon1, lat2, lon2):
     return r * c  # Distance in meters
 
 
-previous_vehicle_state = {}
+# Track the previous state and a history of speeds for smoother estimates
+previous_vehicle_state = {}  # {vehicle_id: (lat, lon, timestamp, speed_history)}
 
 @app.route('/api/next-stop/<vehicle_id>', methods=['GET'])
 def get_next_stop(vehicle_id):
     try:
-        # Retrieve all vehicles and find the matching one
         vehicles = system.getVehicles()
         vehicle = next((v for v in vehicles if str(v.id).strip() == str(vehicle_id).strip()), None)
 
@@ -105,29 +105,43 @@ def get_next_stop(vehicle_id):
         vehicle_lon = float(vehicle.longitude)
         current_time = datetime.now()
 
-        # Check if we have previous state for this vehicle
+        # Retrieve previous state if available
         if vehicle_id in previous_vehicle_state:
-            prev_lat, prev_lon, prev_time = previous_vehicle_state[vehicle_id]
-            # Calculate distance and time difference
+            prev_lat, prev_lon, prev_time, speed_history = previous_vehicle_state[vehicle_id]
+
+            # Calculate distance traveled and time elapsed
             distance_traveled = haversine(vehicle_lat, vehicle_lon, prev_lat, prev_lon)
             time_diff = (current_time - prev_time).total_seconds()
-            # Avoid division by zero
-            speed_mps = distance_traveled / time_diff if time_diff > 0 else 0
+
+            # Avoid division by zero; calculate instantaneous speed
+            if time_diff > 0:
+                current_speed = distance_traveled / time_diff  # Speed in m/s
+            else:
+                current_speed = 0
+
+            # Add current speed to the speed history (cap history size to last 5 speeds)
+            speed_history.append(current_speed)
+            if len(speed_history) > 5:
+                speed_history.pop(0)
+
+            # Calculate the average speed from the history for smoother estimates
+            avg_speed = sum(speed_history) / len(speed_history)
+
         else:
-            # Default speed if no previous data
-            speed_mps = 0
+            # No previous state; assume starting speed is 0
+            avg_speed = 0
+            speed_history = []
 
-        # Store the new state
-        previous_vehicle_state[vehicle_id] = (vehicle_lat, vehicle_lon, current_time)
+        # Update the vehicle's state in the tracking dictionary
+        previous_vehicle_state[vehicle_id] = (vehicle_lat, vehicle_lon, current_time, speed_history)
 
-        # Find the matching route
+        # Get the route and stops
         routes = system.getRoutes()
         route = next((r for r in routes if str(r.myid) == str(vehicle.routeId)), None)
 
         if not route:
             return jsonify({"error": f"Route with ID '{vehicle.routeId}' not found for vehicle"}), 404
 
-        # Get all stops for the route
         stops = route.getStops()
         if not stops or len(stops) < 2:
             return jsonify({"error": "Not enough stops on the route"}), 404
@@ -145,16 +159,16 @@ def get_next_stop(vehicle_id):
             vehicle_lat, vehicle_lon, next_stop.latitude, next_stop.longitude
         )
 
-        # Calculate estimated time to the next stop
-        if speed_mps > 0:
-            time_to_next_stop_seconds = distance_to_next_stop / speed_mps
-        else:
-            time_to_next_stop_seconds = float('inf')  # Infinite time if bus is stationary
+        # If the bus is stopped, use a reasonable speed floor (5.56 m/s ~ 20 km/h)
+        if avg_speed <= 0.1:
+            avg_speed = 5.56  # Set a reasonable default speed
+
+        # Calculate estimated time to the next stop in seconds
+        time_to_next_stop_seconds = distance_to_next_stop / avg_speed
 
         # Convert time to minutes for better readability
-        time_to_next_stop_minutes = time_to_next_stop_seconds / 60
+        time_to_next_stop_minutes = round(time_to_next_stop_seconds / 60, 2)
 
-        # Return the data as a JSON response
         return jsonify({
             "vehicle_id": vehicle.id,
             "route_name": route.name,
@@ -166,7 +180,7 @@ def get_next_stop(vehicle_id):
             "vehicle_longitude": vehicle_lon,
             "approx_distance_to_next_stop_meters": distance_to_next_stop,
             "estimated_time_to_next_stop_minutes": time_to_next_stop_minutes,
-            "current_speed_mps": speed_mps
+            "average_speed_mps": avg_speed
         }), 200
 
     except ValueError as ve:
