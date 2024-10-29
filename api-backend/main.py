@@ -12,9 +12,30 @@ CORS(app)
 system_id = 1053
 system = passiogo.getSystemFromID(system_id)
 
+
 @app.route('/', methods=['GET'])
 def home():
     return "Welcome to the PassioGo API Backend!"
+
+#Step 1.5: Retrieves all the oragnizations that use passiogo.
+@app.route('/systems', methods = ['GET'])
+def get_systems():
+    system_dict = {}
+    systems = passiogo.getSystems()
+    if not systems:
+        return jsonify({"error": "No systems were found"}), 404
+    """for system in systems:
+        system_dict[system.name] = system.id"""
+    systems_data = [
+        {
+            'name': system.name,
+            'id': system.id,
+            'email': system.email,
+            
+        }
+        for system in systems
+    ]
+    return jsonify(systems_data)
 
 # Step 2: Route to get all stops for the system
 @app.route('/api/stops', methods=['GET'])
