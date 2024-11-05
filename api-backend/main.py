@@ -24,8 +24,9 @@ def get_systems():
     systems = passiogo.getSystems()
     if not systems:
         return jsonify({"error": "No systems were found"}), 404
-    """for system in systems:
-        system_dict[system.name] = system.id"""
+    #adds name and id to dictionary
+    for system in systems:
+        system_dict[system.name] = system.id
     systems_data = [
         {
             'name': system.name,
